@@ -224,68 +224,48 @@
             }
         ];
 
-        async function getTranscript() {
-            let url = document.getElementById('videoUrl').value;
-            let videoId = getVideoId(url);
-            
-            if (!videoId) {
-                alert("❌ Sahi YouTube URL daalo!");
-                return;
-            }
-            
-            // Loading dikhao
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('transcriptBox').style.display = 'none';
-            document.getElementById('error').style.display = 'none';
-            document.getElementById('success').style.display = 'none';
-            
-            let transcript = null;
-            let usedAPI = "";
-            
-            // Saari APIs try karo ek ek karke
-            for (let i = 0; i < APIS.length; i++) {
-                const api = APIS[i];
-                document.getElementById('apiStatus').innerText = `⏳ API ${i+1}/4: ${api.name} try ho rahi hai...`;
-                
-                try {
-                    console.log(`Trying ${api.name}...`);
-                    let response = await fetch(api.url(videoId));
-                    
-                    if (response.ok) {
-                        let data = await response.json();
-                        let parsed = api.parser(data);
-                        
-                        if (parsed && parsed.length > 0) {
-                            transcript = parsed;
-                            usedAPI = api.name;
-                            
-                            document.getElementById('success').style.display = 'block';
-                            document.getElementById('success').innerText = `✅ ${api.name} se transcript mil gaya!`;
-                            
-                            break;
-                        }
-                    }
-                } catch (e) {
-                    console.log(`${api.name} failed:`, e);
-                }
-            }
-            
-            document.getElementById('loading').style.display = 'none';
-            
-            if (transcript && transcript.length > 0) {
-                showTranscript(transcript, videoId);
-            } else {
-                document.getElementById('error').style.display = 'block';
-                document.getElementById('error').innerHTML = `
-                    ❌ Koi transcript nahi mila.<br><br>
-                    <strong>💡 Tips:</strong><br>
-                    • Koi aur video try karo (jisme captions ho)<br>
-                    • Neeche diye sample videos try karo<br>
-                    • YouTube shorts ki jagah normal video use karo
-                `;
-            }
-        }
-        
+        // Yeh poorana function delete karo aur ye naya laga do
+async function getTranscript() {
+  let url = document.getElementById('videoUrl').value;
+  let videoId = getVideoId(url);
+
+  if (!videoId) {
+    alert("❌ Sahi YouTube URL daalo!");
+    return;
+  }
+
+  // Loading dikhao
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('transcriptBox').style.display = 'none';
+  document.getElementById('error').style.display = 'none';
+
+  try {
+    // Apne serverless function ko call karo
+    const response = await fetch(`/api/transcript?videoId=${videoId}`);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Transcript nahi mila');
+    }
+
+    const transcript = await response.json();
+    showTranscript(transcript, videoId);
+
+    document.getElementById('success').style.display = 'block';
+    document.getElementById('success').innerText = '✅ Transcript mil gaya!';
+
+  } catch (error) {
+    document.getElementById('error').style.display = 'block';
+    document.getElementById('error').innerHTML = `
+      ❌ ${error.message}<br><br>
+      <strong>💡 Tips:</strong><br>
+      • Koi aur video try karo<br>
+      • Thodi der baad try karo
+    `;
+  } finally {
+    document.getElementById('loading').style.display = 'none';
+  }
+}
         function getVideoId(url) {
             let patterns = [
                 /(?:youtube\.com\/watch\?v=)([^&]+)/i,
@@ -360,3 +340,4 @@
     </script>
 </body>
 </html>
+
