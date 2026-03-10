@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>YouTube Transcript</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: linear-gradient(135deg, #141e30, #243b55); color: white; }
+        .container { max-width: 600px; margin: auto; background: white; color: black; padding: 20px; border-radius: 10px; }
+        input, button { width: 100%; padding: 10px; margin: 5px 0; }
+        .transcript { background: #f0f0f0; padding: 10px; border-radius: 5px; max-height: 400px; overflow-y: auto; }
+        .line { padding: 5px; border-bottom: 1px solid #ddd; }
+        .time { background: #141e30; color: white; padding: 2px 8px; border-radius: 15px; font-size: 12px; margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎥 YouTube Transcript</h1>
+        <p>Video link daalo aur submit karo</p>
+        
+        <input type="text" id="videoUrl" placeholder="YouTube URL yahan likho" value="https://www.youtube.com/watch?v=2Vv-BfVoq4g">
+        <button onclick="getTranscript()">🚀 Transcript Liao</button>
+        
+        <div id="loading" style="display:none;">⏳ Loading... 2 minute lag sakte hain</div>
+        <div id="error" style="display:none; color:red; margin-top:10px;"></div>
+        
+        <div id="transcriptBox" style="display:none; margin-top:20px;">
+            <h3>📝 Transcript:</h3>
+            <div id="transcriptContent" class="transcript"></div>
+            <button onclick="copyText()" style="margin-top:10px;">📋 Copy</button>
+        </div>
+    </div>
+
+    <script>
+        async function getTranscript() {
+            let url = document.getElementById('videoUrl').value;
+            let videoId = getVideoId(url);
+            
+            if(!videoId) {
+                alert("Sahi URL daalo!");
+                return;
+            }
+            
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('transcriptBox').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            
+            try {
+                // Pehla API try karo
+                let response = await fetch(`https://youtubetranscript.com/?server_video_id=${videoId}`);
+                let data = await response.json();
+                
+                if(data && data.length > 0) {
+                    showTranscript(data);
+                } else {
+                    throw new Error("No transcript");
+                }
+            } catch(e) {
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').innerHTML = '❌ Transcript nahi mila. Doosra video try karo.';
+            }
+            
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        function getVideoId(url) {
+            let match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
+            return match ? match[1] : null;
+        }
+        
+        function showTranscript(data) {
+            let html = '';
+            data.forEach((item, i) => {
+                let startMin = Math.floor(item.start / 60);
+                let endMin = Math.floor((item.start + (item.duration || 5)) / 60);
+                html += `<div class="line"><span class="time">${startMin}:${endMin}</span> ${item.text}</div>`;
+            });
+            
+            document.getElementById('transcriptContent').innerHTML = html;
+            document.getElementById('transcriptBox').style.display = 'block';
+        }
+        
+        function copyText() {
+            let text = '';
+            document.querySelectorAll('.line').forEach(line => {
+                text += line.innerText + '\n';
+            });
+            navigator.clipboard.writeText(text);
+            alert('✅ Copy ho gaya!');
+        }
+    </script>
+</body>
+</html>
