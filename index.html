@@ -1,90 +1,361 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>YouTube Transcript</title>
+    <title>YouTube Transcript - 4x API Power</title>
     <style>
-        body { font-family: Arial; padding: 20px; background: linear-gradient(135deg, #141e30, #243b55); color: white; }
-        .container { max-width: 600px; margin: auto; background: white; color: black; padding: 20px; border-radius: 10px; }
-        input, button { width: 100%; padding: 10px; margin: 5px 0; }
-        .transcript { background: #f0f0f0; padding: 10px; border-radius: 5px; max-height: 400px; overflow-y: auto; }
-        .line { padding: 5px; border-bottom: 1px solid #ddd; }
-        .time { background: #141e30; color: white; padding: 2px 8px; border-radius: 15px; font-size: 12px; margin-right: 10px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #141e30, #243b55);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #141e30;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #243b55;
+        }
+        button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #141e30, #243b55);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        .loading {
+            text-align: center;
+            padding: 30px;
+            display: none;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #243b55;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid #ffcdd2;
+            display: none;
+        }
+        .success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+        .transcript-box {
+            margin-top: 30px;
+            display: none;
+        }
+        .video-info {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .transcript-content {
+            max-height: 500px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+        }
+        .line {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: flex-start;
+        }
+        .line:hover {
+            background: #f0f0f0;
+        }
+        .timestamp {
+            background: #243b55;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            min-width: 60px;
+            text-align: center;
+            margin-right: 15px;
+        }
+        .copy-btn {
+            width: 100%;
+            margin-top: 15px;
+            padding: 12px;
+            background: linear-gradient(135deg, #34a853, #0f9d58);
+        }
+        .sample-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .sample-btn {
+            padding: 8px 15px;
+            background: #e9ecef;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .sample-btn:hover {
+            background: #dee2e6;
+        }
+        .api-status {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎥 YouTube Transcript</h1>
-        <p>Video link daalo aur submit karo</p>
+        <h1>🎥 YouTube Transcript Pro</h1>
+        <p class="subtitle">4 different APIs se transcript laata hai - Har video ka try karta hai!</p>
         
-        <input type="text" id="videoUrl" placeholder="YouTube URL yahan likho" value="https://www.youtube.com/watch?v=2Vv-BfVoq4g">
-        <button onclick="getTranscript()">🚀 Transcript Liao</button>
+        <div class="input-group">
+            <input type="text" id="videoUrl" placeholder="YouTube URL yahan likho" value="https://www.youtube.com/watch?v=2Vv-BfVoq4g">
+            <button onclick="getTranscript()">🔍 Search</button>
+        </div>
         
-        <div id="loading" style="display:none;">⏳ Loading... 2 minute lag sakte hain</div>
-        <div id="error" style="display:none; color:red; margin-top:10px;"></div>
+        <div class="sample-buttons">
+            <button class="sample-btn" onclick="useVideo('https://www.youtube.com/watch?v=2Vv-BfVoq4g')">📺 Git Hindi</button>
+            <button class="sample-btn" onclick="useVideo('https://www.youtube.com/watch?v=rfscVS0vtbw')">🐍 Python</button>
+            <button class="sample-btn" onclick="useVideo('https://www.youtube.com/watch?v=dQw4w9WgXcQ')">🎵 Music</button>
+            <button class="sample-btn" onclick="useVideo('https://www.youtube.com/watch?v=jNQXAC9IVRw')">📼 First Video</button>
+        </div>
         
-        <div id="transcriptBox" style="display:none; margin-top:20px;">
-            <h3>📝 Transcript:</h3>
-            <div id="transcriptContent" class="transcript"></div>
-            <button onclick="copyText()" style="margin-top:10px;">📋 Copy</button>
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>⏳ 4 APIs try ho rahi hain...</p>
+            <p id="apiStatus" style="font-size: 13px; color: #666;">Shuru ho raha hai...</p>
+        </div>
+        
+        <div id="error" class="error"></div>
+        <div id="success" class="success"></div>
+        
+        <div id="transcriptBox" class="transcript-box">
+            <div class="video-info">
+                <h3 id="videoTitle">Video Title</h3>
+                <p id="videoStats"></p>
+            </div>
+            <div id="transcriptContent" class="transcript-content"></div>
+            <button onclick="copyTranscript()" class="copy-btn">📋 Copy Transcript</button>
         </div>
     </div>
 
     <script>
+        // 4 Different APIs
+        const APIS = [
+            {
+                name: "YouTube Transcript API",
+                url: (id) => `https://youtubetranscript.com/?server_video_id=${id}`,
+                parser: (data) => data
+            },
+            {
+                name: "Transcript Grabber",
+                url: (id) => `https://yt-grabber.vercel.app/api/transcript/${id}`,
+                parser: (data) => data.transcript || data
+            },
+            {
+                name: "CORS Proxy",
+                url: (id) => `https://api.codetabs.com/v1/proxy?quest=https://youtubetranscript.com/?server_video_id=${id}`,
+                parser: (data) => data
+            },
+            {
+                name: "Backup API",
+                url: (id) => `https://youtube-captions.vercel.app/api/transcript/${id}`,
+                parser: (data) => data
+            }
+        ];
+
         async function getTranscript() {
             let url = document.getElementById('videoUrl').value;
             let videoId = getVideoId(url);
             
-            if(!videoId) {
-                alert("Sahi URL daalo!");
+            if (!videoId) {
+                alert("❌ Sahi YouTube URL daalo!");
                 return;
             }
             
+            // Loading dikhao
             document.getElementById('loading').style.display = 'block';
             document.getElementById('transcriptBox').style.display = 'none';
             document.getElementById('error').style.display = 'none';
+            document.getElementById('success').style.display = 'none';
             
-            try {
-                // Pehla API try karo
-                let response = await fetch(`https://youtubetranscript.com/?server_video_id=${videoId}`);
-                let data = await response.json();
+            let transcript = null;
+            let usedAPI = "";
+            
+            // Saari APIs try karo ek ek karke
+            for (let i = 0; i < APIS.length; i++) {
+                const api = APIS[i];
+                document.getElementById('apiStatus').innerText = `⏳ API ${i+1}/4: ${api.name} try ho rahi hai...`;
                 
-                if(data && data.length > 0) {
-                    showTranscript(data);
-                } else {
-                    throw new Error("No transcript");
+                try {
+                    console.log(`Trying ${api.name}...`);
+                    let response = await fetch(api.url(videoId));
+                    
+                    if (response.ok) {
+                        let data = await response.json();
+                        let parsed = api.parser(data);
+                        
+                        if (parsed && parsed.length > 0) {
+                            transcript = parsed;
+                            usedAPI = api.name;
+                            
+                            document.getElementById('success').style.display = 'block';
+                            document.getElementById('success').innerText = `✅ ${api.name} se transcript mil gaya!`;
+                            
+                            break;
+                        }
+                    }
+                } catch (e) {
+                    console.log(`${api.name} failed:`, e);
                 }
-            } catch(e) {
-                document.getElementById('error').style.display = 'block';
-                document.getElementById('error').innerHTML = '❌ Transcript nahi mila. Doosra video try karo.';
             }
             
             document.getElementById('loading').style.display = 'none';
+            
+            if (transcript && transcript.length > 0) {
+                showTranscript(transcript, videoId);
+            } else {
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').innerHTML = `
+                    ❌ Koi transcript nahi mila.<br><br>
+                    <strong>💡 Tips:</strong><br>
+                    • Koi aur video try karo (jisme captions ho)<br>
+                    • Neeche diye sample videos try karo<br>
+                    • YouTube shorts ki jagah normal video use karo
+                `;
+            }
         }
         
         function getVideoId(url) {
-            let match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
-            return match ? match[1] : null;
+            let patterns = [
+                /(?:youtube\.com\/watch\?v=)([^&]+)/i,
+                /(?:youtu\.be\/)([^?]+)/i,
+                /(?:youtube\.com\/embed\/)([^?]+)/i,
+                /(?:youtube\.com\/shorts\/)([^?]+)/i
+            ];
+            
+            for (let pattern of patterns) {
+                let match = url.match(pattern);
+                if (match) return match[1];
+            }
+            
+            // Agar sirf video ID ho
+            if (url.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(url)) {
+                return url;
+            }
+            
+            return null;
         }
         
-        function showTranscript(data) {
+        function showTranscript(transcript, videoId) {
             let html = '';
-            data.forEach((item, i) => {
-                let startMin = Math.floor(item.start / 60);
-                let endMin = Math.floor((item.start + (item.duration || 5)) / 60);
-                html += `<div class="line"><span class="time">${startMin}:${endMin}</span> ${item.text}</div>`;
+            
+            transcript.forEach((item, index) => {
+                // Start time
+                let start = item.start || 0;
+                let startMin = Math.floor(start / 60);
+                let startSec = Math.floor(start % 60);
+                
+                // End time (next item ya current + duration)
+                let end;
+                if (index < transcript.length - 1) {
+                    end = transcript[index + 1].start || (start + 5);
+                } else {
+                    end = start + (item.duration || 5);
+                }
+                let endMin = Math.floor(end / 60);
+                
+                // Text
+                let text = item.text || '';
+                
+                html += `<div class="line">
+                    <span class="timestamp">${startMin}:${endMin}</span>
+                    <span>${text}</span>
+                </div>`;
             });
             
             document.getElementById('transcriptContent').innerHTML = html;
+            document.getElementById('videoTitle').innerText = `Video ID: ${videoId}`;
+            document.getElementById('videoStats').innerText = `📊 Total lines: ${transcript.length}`;
             document.getElementById('transcriptBox').style.display = 'block';
         }
         
-        function copyText() {
+        function copyTranscript() {
             let text = '';
             document.querySelectorAll('.line').forEach(line => {
                 text += line.innerText + '\n';
             });
-            navigator.clipboard.writeText(text);
-            alert('✅ Copy ho gaya!');
+            
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ Copy ho gaya!');
+            }).catch(() => {
+                alert('❌ Copy failed');
+            });
+        }
+        
+        function useVideo(url) {
+            document.getElementById('videoUrl').value = url;
+            getTranscript();
         }
     </script>
 </body>
