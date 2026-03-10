@@ -156,17 +156,12 @@
         .sample-btn:hover {
             background: #dee2e6;
         }
-        .api-status {
-            font-size: 12px;
-            color: #666;
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎥 YouTube Transcript Pro</h1>
-        <p class="subtitle">4 different APIs se transcript laata hai - Har video ka try karta hai!</p>
+        <p class="subtitle">Backend proxy ke saath - Har video ka transcript!</p>
         
         <div class="input-group">
             <input type="text" id="videoUrl" placeholder="YouTube URL yahan likho" value="https://www.youtube.com/watch?v=2Vv-BfVoq4g">
@@ -176,14 +171,13 @@
         <div class="sample-buttons">
             <button class="sample-btn" onclick="useVideo('https://www.youtube.com/watch?v=2Vv-BfVoq4g')">📺 Git Hindi</button>
             <button class="sample-btn" onclick="useVideo('https://www.youtube.com/watch?v=rfscVS0vtbw')">🐍 Python</button>
-            <button class="sample-btn" onclick="useVideo('https://www.youtube.com/watch?v=dQw4w9WgXcQ')">🎵 Music</button>
-            <button class="sample-btn" onclick="useVideo('https://www.youtube.com/watch?v=jNQXAC9IVRw')">📼 First Video</button>
+            <button class="sample-btn" onclick="useVideo('https://www.youtube.com/watch?v=xoZG5WQbgMw')">🎨 Midjourney</button>
+            <button class="sample-btn" onclick="useVideo('https://www.youtube.com/watch?v=5Tfwo1cB340')">🤖 Claude vs ChatGPT</button>
         </div>
         
         <div id="loading" class="loading">
             <div class="spinner"></div>
-            <p>⏳ 4 APIs try ho rahi hain...</p>
-            <p id="apiStatus" style="font-size: 13px; color: #666;">Shuru ho raha hai...</p>
+            <p>⏳ Transcript la rahe hain...</p>
         </div>
         
         <div id="error" class="error"></div>
@@ -200,72 +194,9 @@
     </div>
 
     <script>
-        // 4 Different APIs
-        const APIS = [
-            {
-                name: "YouTube Transcript API",
-                url: (id) => `https://youtubetranscript.com/?server_video_id=${id}`,
-                parser: (data) => data
-            },
-            {
-                name: "Transcript Grabber",
-                url: (id) => `https://yt-grabber.vercel.app/api/transcript/${id}`,
-                parser: (data) => data.transcript || data
-            },
-            {
-                name: "CORS Proxy",
-                url: (id) => `https://api.codetabs.com/v1/proxy?quest=https://youtubetranscript.com/?server_video_id=${id}`,
-                parser: (data) => data
-            },
-            {
-                name: "Backup API",
-                url: (id) => `https://youtube-captions.vercel.app/api/transcript/${id}`,
-                parser: (data) => data
-            }
-        ];
-
-        // Yeh poorana function delete karo aur ye naya laga do
-async function getTranscript() {
-  let url = document.getElementById('videoUrl').value;
-  let videoId = getVideoId(url);
-
-  if (!videoId) {
-    alert("❌ Sahi YouTube URL daalo!");
-    return;
-  }
-
-  // Loading dikhao
-  document.getElementById('loading').style.display = 'block';
-  document.getElementById('transcriptBox').style.display = 'none';
-  document.getElementById('error').style.display = 'none';
-
-  try {
-    // Apne serverless function ko call karo
-    const response = await fetch(`/api/transcript?videoId=${videoId}`);
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Transcript nahi mila');
-    }
-
-    const transcript = await response.json();
-    showTranscript(transcript, videoId);
-
-    document.getElementById('success').style.display = 'block';
-    document.getElementById('success').innerText = '✅ Transcript mil gaya!';
-
-  } catch (error) {
-    document.getElementById('error').style.display = 'block';
-    document.getElementById('error').innerHTML = `
-      ❌ ${error.message}<br><br>
-      <strong>💡 Tips:</strong><br>
-      • Koi aur video try karo<br>
-      • Thodi der baad try karo
-    `;
-  } finally {
-    document.getElementById('loading').style.display = 'none';
-  }
-}
+        // 🔥 YAHAN SE SCRIPT SHURU HOTI HAI 🔥
+        
+        // YouTube URL se video ID nikaalne ka function
         function getVideoId(url) {
             let patterns = [
                 /(?:youtube\.com\/watch\?v=)([^&]+)/i,
@@ -279,7 +210,7 @@ async function getTranscript() {
                 if (match) return match[1];
             }
             
-            // Agar sirf video ID ho
+            // Agar sirf video ID ho (11 characters)
             if (url.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(url)) {
                 return url;
             }
@@ -287,6 +218,52 @@ async function getTranscript() {
             return null;
         }
         
+        // 👉 MAIN FUNCTION: Transcript lene ka
+        async function getTranscript() {
+            let url = document.getElementById('videoUrl').value;
+            let videoId = getVideoId(url);
+
+            if (!videoId) {
+                alert("❌ Sahi YouTube URL daalo!");
+                return;
+            }
+
+            // Loading dikhao
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('transcriptBox').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('success').style.display = 'none';
+
+            try {
+                // 🌟 IMPORTANT: Apne backend API ko call karo
+                // Yeh /api/transcript wali file ko call karega jo humne banayi hai
+                const response = await fetch(`/api/transcript?videoId=${videoId}`);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Transcript nahi mila');
+                }
+
+                const transcript = await response.json();
+                showTranscript(transcript, videoId);
+
+                document.getElementById('success').style.display = 'block';
+                document.getElementById('success').innerText = '✅ Transcript mil gaya!';
+
+            } catch (error) {
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').innerHTML = `
+                    ❌ ${error.message}<br><br>
+                    <strong>💡 Tips:</strong><br>
+                    • Koi aur video try karo<br>
+                    • Thodi der baad try karo
+                `;
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+        
+        // 👉 Transcript ko show karne ka function
         function showTranscript(transcript, videoId) {
             let html = '';
             
@@ -320,6 +297,7 @@ async function getTranscript() {
             document.getElementById('transcriptBox').style.display = 'block';
         }
         
+        // 👉 Copy button ka function
         function copyTranscript() {
             let text = '';
             document.querySelectorAll('.line').forEach(line => {
@@ -333,6 +311,7 @@ async function getTranscript() {
             });
         }
         
+        // 👉 Sample videos use karne ka function
         function useVideo(url) {
             document.getElementById('videoUrl').value = url;
             getTranscript();
@@ -340,4 +319,3 @@ async function getTranscript() {
     </script>
 </body>
 </html>
-
