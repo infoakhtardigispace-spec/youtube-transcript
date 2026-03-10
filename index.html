@@ -1,88 +1,135 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>YouTube Transcript - Full Working</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube AI Transcriber - Har Video Ka Transcript!</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+        
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: linear-gradient(135deg, #141e30, #243b55);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
+        
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
             padding: 30px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
+        
         h1 {
-            color: #141e30;
-            margin-bottom: 10px;
-            font-size: 2em;
+            color: #333;
             text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.2em;
         }
+        
         .subtitle {
             color: #666;
-            margin-bottom: 30px;
             text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.1em;
         }
-        .input-group {
+        
+        .input-section {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
         }
+        
         input {
-            flex: 1;
-            padding: 15px;
+            padding: 15px 20px;
             border: 2px solid #e0e0e0;
-            border-radius: 10px;
+            border-radius: 50px;
             font-size: 16px;
+            transition: border-color 0.3s;
         }
+        
         input:focus {
             outline: none;
-            border-color: #243b55;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
         }
+        
         button {
             padding: 15px 30px;
-            background: linear-gradient(135deg, #141e30, #243b55);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 50px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
+        
         button:hover {
             transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102,126,234,0.3);
         }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
         .loading {
             text-align: center;
             padding: 30px;
             display: none;
         }
+        
         .spinner {
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #243b55;
+            border-top: 4px solid #667eea;
             border-radius: 50%;
             width: 50px;
             height: 50px;
             animation: spin 1s linear infinite;
             margin: 0 auto 15px;
         }
+        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        .progress-container {
+            width: 100%;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .progress-bar {
+            width: 0%;
+            height: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+        
+        .progress-text {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
         .error {
-            background: #ffebee;
+            background-color: #ffebee;
             color: #c62828;
             padding: 20px;
             border-radius: 10px;
@@ -90,25 +137,39 @@
             border: 1px solid #ffcdd2;
             display: none;
         }
+        
         .success {
-            background: #e8f5e8;
+            background-color: #e8f5e8;
             color: #2e7d32;
             padding: 15px;
             border-radius: 10px;
             margin: 20px 0;
             display: none;
         }
-        .transcript-box {
+        
+        .result-box {
             margin-top: 30px;
             display: none;
         }
+        
         .video-info {
             background: #f5f5f5;
-            padding: 15px;
+            padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
         }
-        .transcript-content {
+        
+        .video-info h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .video-info p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .transcript-container {
             max-height: 500px;
             overflow-y: auto;
             background: #f9f9f9;
@@ -116,31 +177,59 @@
             padding: 15px;
             border: 1px solid #e0e0e0;
         }
-        .line {
-            padding: 10px;
+        
+        .transcript-line {
+            padding: 12px;
             border-bottom: 1px solid #e0e0e0;
             display: flex;
             align-items: flex-start;
+            transition: background-color 0.2s;
         }
-        .line:hover {
-            background: #f0f0f0;
+        
+        .transcript-line:hover {
+            background-color: #f0f0f0;
         }
+        
+        .transcript-line:last-child {
+            border-bottom: none;
+        }
+        
         .timestamp {
-            background: #243b55;
+            background: #667eea;
             color: white;
-            padding: 3px 10px;
+            padding: 4px 12px;
             border-radius: 20px;
             font-size: 12px;
-            min-width: 60px;
+            min-width: 70px;
             text-align: center;
             margin-right: 15px;
+            font-weight: 600;
         }
+        
+        .text {
+            color: #444;
+            flex: 1;
+            line-height: 1.5;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .button-group button {
+            flex: 1;
+        }
+        
         .copy-btn {
-            width: 100%;
-            margin-top: 15px;
-            padding: 12px;
             background: linear-gradient(135deg, #34a853, #0f9d58);
         }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+        
         .sample-buttons {
             display: flex;
             gap: 10px;
@@ -148,6 +237,7 @@
             margin: 20px 0;
             justify-content: center;
         }
+        
         .sample-btn {
             padding: 8px 15px;
             background: #e9ecef;
@@ -155,182 +245,319 @@
             border-radius: 20px;
             cursor: pointer;
             font-size: 12px;
+            color: #333;
+            transition: background-color 0.2s;
         }
+        
         .sample-btn:hover {
             background: #dee2e6;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 40px 0 20px;
+        }
+        
+        .feature {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .feature-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .feature h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .feature p {
+            color: #666;
+            font-size: 13px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #999;
+            font-size: 13px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎥 YouTube Transcript Pro</h1>
-        <p class="subtitle">Backend proxy ke saath - Har video ka transcript!</p>
+        <h1>🎥 YouTube AI Transcriber</h1>
+        <p class="subtitle">Har YouTube video ka transcript pao - chahe captions ho ya na ho!</p>
         
-        <div class="input-group">
-            <input type="text" id="videoUrl" placeholder="YouTube URL yahan likho" value="https://www.youtube.com/watch?v=xoZG5WQbgMw">
-            <button onclick="getTranscript()">🔍 Search</button>
+        <div class="input-section">
+            <input type="text" id="videoUrl" placeholder="YouTube URL yahan paste karo..." value="https://www.youtube.com/watch?v=xoZG5WQbgMw">
+            <button onclick="transcribeVideo()" id="transcribeBtn">🚀 Transcript Generate Karo</button>
         </div>
         
         <div class="sample-buttons">
-            <button class="sample-btn" onclick="useVideo('https://www.youtube.com/watch?v=xoZG5WQbgMw')">🎨 Midjourney</button>
-            <button class="sample-btn" onclick="useVideo('https://www.youtube.com/watch?v=5Tfwo1cB340')">🤖 Claude vs ChatGPT</button>
-            <button class="sample-btn" onclick="useVideo('https://www.youtube.com/watch?v=2Vv-BfVoq4g')">📺 Git Hindi</button>
+            <button class="sample-btn" onclick="useSample('https://www.youtube.com/watch?v=xoZG5WQbgMw')">🎨 Midjourney</button>
+            <button class="sample-btn" onclick="useSample('https://www.youtube.com/watch?v=5Tfwo1cB340')">🤖 Claude vs ChatGPT</button>
+            <button class="sample-btn" onclick="useSample('https://www.youtube.com/watch?v=2Vv-BfVoq4g')">📺 Git Hindi</button>
         </div>
         
-        <div id="loading" class="loading">
+        <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p>⏳ Transcript la rahe hain...</p>
+            <p id="loadingStatus">⏳ Video process ho raha hai...</p>
         </div>
         
-        <div id="error" class="error"></div>
-        <div id="success" class="success"></div>
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+            <div class="progress-text" id="progressText">0%</div>
+        </div>
         
-        <div id="transcriptBox" class="transcript-box">
+        <div class="error" id="error"></div>
+        <div class="success" id="success"></div>
+        
+        <div class="result-box" id="resultBox">
             <div class="video-info">
                 <h3 id="videoTitle">Video Title</h3>
                 <p id="videoStats"></p>
             </div>
-            <div id="transcriptContent" class="transcript-content"></div>
-            <button onclick="copyTranscript()" class="copy-btn">📋 Copy Transcript</button>
+            
+            <div class="transcript-container" id="transcriptContainer"></div>
+            
+            <div class="button-group">
+                <button onclick="copyTranscript()" class="copy-btn">📋 Copy Transcript</button>
+                <button onclick="downloadTranscript()" class="download-btn">📥 Download TXT</button>
+            </div>
         </div>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🎯</div>
+                <h4>100% Accurate</h4>
+                <p>AI-powered transcription</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">⚡</div>
+                <h4>Fast Processing</h4>
+                <p>2-3 minutes mein ready</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🌐</div>
+                <h4>Har Video</h4>
+                <p>Captions ho ya na ho</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📝</div>
+                <h4>Timeline Format</h4>
+                <p>0:1, 1:2, 2:3 format</p>
+            </div>
+        </div>
+        
+        <footer>
+            © 2026 YouTube AI Transcriber | Har video ka transcript guaranteed!
+        </footer>
     </div>
 
     <script>
-        // 🔥 COMPLETE SCRIPT - DIRECTLY COPY PASTE KARO 🔥
+        let currentTranscript = [];
+        let currentVideoId = '';
         
-        // YouTube URL se video ID nikaalne ka function
-        function getVideoId(url) {
-            try {
-                let patterns = [
-                    /(?:youtube\.com\/watch\?v=)([^&]+)/i,
-                    /(?:youtu\.be\/)([^?]+)/i,
-                    /(?:youtube\.com\/embed\/)([^?]+)/i,
-                    /(?:youtube\.com\/shorts\/)([^?]+)/i
-                ];
-                
-                for (let pattern of patterns) {
-                    let match = url.match(pattern);
-                    if (match) return match[1];
-                }
-                
-                // Agar sirf video ID ho (11 characters)
-                if (url.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(url)) {
-                    return url;
-                }
-                
-                return null;
-            } catch (e) {
-                return null;
-            }
+        function useSample(url) {
+            document.getElementById('videoUrl').value = url;
+            transcribeVideo();
         }
         
-        // MAIN FUNCTION: Transcript lene ka
-        async function getTranscript() {
-            let url = document.getElementById('videoUrl').value;
-            let videoId = getVideoId(url);
-
+        async function transcribeVideo() {
+            const url = document.getElementById('videoUrl').value;
+            const videoId = extractVideoId(url);
+            
             if (!videoId) {
-                alert("❌ Sahi YouTube URL daalo!\nExample: https://www.youtube.com/watch?v=xxxx");
+                showError('❌ Sahi YouTube URL daalo!');
                 return;
             }
-
-            // Loading dikhao
+            
+            currentVideoId = videoId;
+            
+            // Show loading
             document.getElementById('loading').style.display = 'block';
-            document.getElementById('transcriptBox').style.display = 'none';
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('resultBox').style.display = 'none';
             document.getElementById('error').style.display = 'none';
             document.getElementById('success').style.display = 'none';
-
+            document.getElementById('transcribeBtn').disabled = true;
+            
+            updateProgress(10, '🔍 Video info fetch ho raha hai...');
+            
             try {
-                // 🔥 DIRECT API CALL - YOUTUBE TRANSCRIPT API
-               let apiUrl = `/api/transcript?videoId=${videoId}`;
+                // Step 1: Get video info
+                const infoResponse = await fetch(`/api/video-info?videoId=${videoId}`);
+                if (!infoResponse.ok) throw new Error('Video info nahi mil sakta');
+                const videoInfo = await infoResponse.json();
                 
-                let response = await fetch(apiUrl);
+                updateProgress(30, '⬇️ Audio download ho raha hai...');
                 
-                if (!response.ok) {
-                    throw new Error('API response error');
+                // Step 2: Download and transcribe
+                const transcribeResponse = await fetch('/api/transcribe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ videoId: videoId, url: url })
+                });
+                
+                if (!transcribeResponse.ok) {
+                    const errorData = await transcribeResponse.json();
+                    throw new Error(errorData.error || 'Transcription failed');
                 }
-
-                let transcript = await response.json();
                 
-                if (transcript && transcript.length > 0) {
-                    showTranscript(transcript, videoId);
-                    document.getElementById('success').style.display = 'block';
-                    document.getElementById('success').innerText = '✅ Transcript mil gaya!';
-                } else {
-                    throw new Error('Transcript nahi mila');
-                }
-
+                updateProgress(80, '📝 Transcript process ho raha hai...');
+                
+                const transcript = await transcribeResponse.json();
+                
+                updateProgress(100, '✅ Ho gaya!');
+                
+                showTranscript(transcript, videoInfo);
+                showSuccess('🎉 Transcript ready hai!');
+                
             } catch (error) {
-                document.getElementById('error').style.display = 'block';
-                document.getElementById('error').innerHTML = `
-                    ❌ ${error.message}<br><br>
-                    <strong>💡 Yeh videos try karo:</strong><br>
-                    • https://www.youtube.com/watch?v=2Vv-BfVoq4g (Git Hindi)<br>
-                    • https://www.youtube.com/watch?v=rfscVS0vtbw (Python)<br>
-                    • https://www.youtube.com/watch?v=dQw4w9WgXcQ (Music)
-                `;
+                showError('❌ Error: ' + error.message);
             } finally {
                 document.getElementById('loading').style.display = 'none';
+                setTimeout(() => {
+                    document.getElementById('progressContainer').style.display = 'none';
+                }, 1000);
+                document.getElementById('transcribeBtn').disabled = false;
             }
         }
         
-        // Transcript ko show karne ka function
-        function showTranscript(transcript, videoId) {
-            let html = '';
+        function extractVideoId(url) {
+            const patterns = [
+                /(?:youtube\.com\/watch\?v=)([^&]+)/i,
+                /(?:youtu\.be\/)([^?]+)/i,
+                /(?:youtube\.com\/embed\/)([^?]+)/i,
+                /(?:youtube\.com\/shorts\/)([^?]+)/i
+            ];
             
-            for(let i = 0; i < transcript.length; i++) {
-                let item = transcript[i];
-                
-                // Start time
-                let start = item.start || 0;
-                let startMin = Math.floor(start / 60);
-                
-                // End time
-                let end;
-                if (i < transcript.length - 1) {
-                    end = transcript[i + 1].start || (start + 5);
-                } else {
-                    end = start + (item.duration || 5);
-                }
-                let endMin = Math.floor(end / 60);
-                
-                // Text
-                let text = item.text || '';
-                
-                html += `<div class="line">
-                    <span class="timestamp">${startMin}:${endMin}</span>
-                    <span>${text}</span>
-                </div>`;
+            for (let pattern of patterns) {
+                const match = url.match(pattern);
+                if (match) return match[1];
             }
             
-            document.getElementById('transcriptContent').innerHTML = html;
-            document.getElementById('videoTitle').innerText = `Video ID: ${videoId}`;
-            document.getElementById('videoStats').innerText = `📊 Total lines: ${transcript.length}`;
-            document.getElementById('transcriptBox').style.display = 'block';
+            if (url.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(url)) {
+                return url;
+            }
+            
+            return null;
         }
         
-        // Copy button ka function
+        function updateProgress(percent, status) {
+            document.getElementById('progressBar').style.width = percent + '%';
+            document.getElementById('progressText').innerText = percent + '% - ' + status;
+            document.getElementById('loadingStatus').innerText = status;
+        }
+        
+        function showTranscript(transcript, videoInfo) {
+            const container = document.getElementById('transcriptContainer');
+            container.innerHTML = '';
+            
+            currentTranscript = [];
+            
+            transcript.forEach((item, index) => {
+                const line = document.createElement('div');
+                line.className = 'transcript-line';
+                
+                const timestamp = document.createElement('span');
+                timestamp.className = 'timestamp';
+                
+                // Format: startMin:endMin
+                const startMin = Math.floor(item.start / 60);
+                const endMin = Math.floor((item.start + item.duration) / 60);
+                timestamp.innerText = `${startMin}:${endMin}`;
+                
+                const text = document.createElement('span');
+                text.className = 'text';
+                text.innerText = item.text;
+                
+                line.appendChild(timestamp);
+                line.appendChild(text);
+                container.appendChild(line);
+                
+                currentTranscript.push({
+                    timestamp: `${startMin}:${endMin}`,
+                    text: item.text
+                });
+            });
+            
+            document.getElementById('videoTitle').innerText = videoInfo.title || 'YouTube Video';
+            document.getElementById('videoStats').innerHTML = `
+                📊 Total Lines: ${transcript.length} | 
+                ⏱️ Duration: ${Math.floor(videoInfo.duration / 60)}:${Math.floor(videoInfo.duration % 60).toString().padStart(2, '0')} |
+                🎙️ Language: ${videoInfo.language || 'Auto-detect'}
+            `;
+            
+            document.getElementById('resultBox').style.display = 'block';
+        }
+        
         function copyTranscript() {
             let text = '';
-            let lines = document.querySelectorAll('.line');
-            
-            for(let line of lines) {
-                text += line.innerText + '\n';
-            }
+            currentTranscript.forEach(item => {
+                text += `${item.timestamp} ${item.text}\n`;
+            });
             
             navigator.clipboard.writeText(text).then(() => {
-                alert('✅ Copy ho gaya!');
+                showSuccess('✅ Copy ho gaya!');
             }).catch(() => {
-                alert('Manual copy karo');
+                // Fallback
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showSuccess('✅ Copy ho gaya!');
             });
         }
         
-        // Sample videos use karne ka function
-        function useVideo(url) {
-            document.getElementById('videoUrl').value = url;
-            getTranscript();
+        function downloadTranscript() {
+            let text = `YouTube Transcript\n`;
+            text += `Video ID: ${currentVideoId}\n`;
+            text += `Date: ${new Date().toLocaleString()}\n`;
+            text += `-`.repeat(50) + '\n\n';
+            
+            currentTranscript.forEach(item => {
+                text += `${item.timestamp} ${item.text}\n`;
+            });
+            
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `transcript_${currentVideoId}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showSuccess('✅ Download ho gaya!');
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.innerHTML = message;
+            errorDiv.style.display = 'block';
+        }
+        
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success');
+            successDiv.innerText = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 3000);
         }
     </script>
 </body>
 </html>
-
