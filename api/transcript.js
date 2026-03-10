@@ -1,7 +1,13 @@
-// api/transcript.js
+// api/transcript.js - Simplified version
 export default async function handler(req, res) {
-  // Allow requests from any website (CORS header)
+  // Allow requests from anywhere
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  
+  // Handle preflight request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
   const { videoId } = req.query;
 
@@ -10,80 +16,93 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Pehle try karo: YouTube ka internal API
-    let transcript = await fetchFromYouTubeAPI(videoId);
-
-    // 2. Agar na mile to try karo doosra API
-    if (!transcript) {
-      transcript = await fetchFromTranscriptAPI(videoId);
+    console.log(`Fetching transcript for video: ${videoId}`);
+    
+    // Try multiple sources
+    let transcript = null;
+    
+    // Source 1: YouTube Transcript API (most reliable)
+    try {
+      const response = await fetch(`https://youtubetranscript.com/?server_video_id=${videoId}`);
+      if (response.ok) {
+        transcript = await response.json();
+        console.log('Got transcript from API 1');
+      }
+    } catch (e) {
+      console.log('API 1 failed:', e.message);
     }
-
+    
+    // Source 2: Direct YouTube scraping (if API fails)
+    if (!transcript || transcript.length === 0) {
+      try {
+        transcript = await fetchFromYouTube(videoId);
+        console.log('Got transcript from YouTube direct');
+      } catch (e) {
+        console.log('YouTube direct failed:', e.message);
+      }
+    }
+    
     if (transcript && transcript.length > 0) {
       return res.status(200).json(transcript);
     } else {
       return res.status(404).json({ error: 'Transcript nahi mila' });
     }
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('Server error:', error);
     return res.status(500).json({ error: 'Server error: ' + error.message });
   }
 }
 
-// Method 1: YouTube ka internal hidden API
-async function fetchFromYouTubeAPI(videoId) {
+// Direct YouTube fetch function
+async function fetchFromYouTube(videoId) {
   try {
-    // Pehle video ka page fetch karo
-    const response = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
+    // Get video page
+    const response = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    
     const html = await response.text();
-
-    // HTML mein se captions track ka URL nikaalo
-    const regex = /"captionTracks":\[(.*?)\]/;
+    
+    // Try to find captions in page
+    const regex = /"captionTracks":\s*(\[.*?\])/;
     const match = html.match(regex);
-
+    
     if (match) {
-      const captionData = JSON.parse(`[${match[1]}]`)[0];
-      const baseUrl = captionData.baseUrl;
-
-      // Ab captions fetch karo
-      const captionsResponse = await fetch(baseUrl);
-      const captionsXml = await captionsResponse.text();
-
-      // XML ko parse karo aur transcript banayo
-      return parseXmlToTranscript(captionsXml);
+      const captionData = JSON.parse(match[1]);
+      if (captionData && captionData[0] && captionData[0].baseUrl) {
+        const captionsUrl = captionData[0].baseUrl;
+        const captionsResponse = await fetch(captionsUrl);
+        const captionsXml = await captionsResponse.text();
+        
+        // Parse XML
+        return parseXmlTranscript(captionsXml);
+      }
     }
     return null;
   } catch (e) {
-    console.log('YouTube API failed:', e);
+    console.log('YouTube direct error:', e);
     return null;
   }
 }
 
-// Method 2: Public Transcript API (fallback)
-async function fetchFromTranscriptAPI(videoId) {
-  try {
-    const response = await fetch(`https://youtubetranscript.com/?server_video_id=${videoId}`);
-    if (response.ok) {
-      return await response.json();
-    }
-    return null;
-  } catch (e) {
-    return null;
-  }
-}
-
-// XML parser function
-function parseXmlToTranscript(xmlText) {
+// Parse XML transcript
+function parseXmlTranscript(xml) {
   const lines = [];
   const regex = /<text start="([\d.]+)" dur="([\d.]+)">(.*?)<\/text>/g;
   let match;
-
-  while ((match = regex.exec(xmlText)) !== null) {
+  
+  while ((match = regex.exec(xml)) !== null) {
     lines.push({
       start: parseFloat(match[1]),
       duration: parseFloat(match[2]),
-      text: match[3].replace(/&amp;#39;/g, "'").replace(/&amp;quot;/g, '"')
+      text: match[3]
+        .replace(/&amp;#39;/g, "'")
+        .replace(/&amp;quot;/g, '"')
+        .replace(/&amp;amp;/g, '&')
     });
   }
-
+  
   return lines;
 }
