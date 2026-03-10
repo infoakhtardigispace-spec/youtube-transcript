@@ -242,7 +242,7 @@
 
             try {
                 // 🔥 DIRECT API CALL - YOUTUBE TRANSCRIPT API
-                let apiUrl = `https://youtubetranscript.com/?server_video_id=${videoId}`;
+               let apiUrl = `/api/transcript?videoId=${videoId}`;
                 
                 let response = await fetch(apiUrl);
                 
@@ -333,3 +333,4 @@
     </script>
 </body>
 </html>
+
