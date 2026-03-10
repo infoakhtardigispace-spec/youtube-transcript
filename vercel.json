@@ -1,8 +1,12 @@
 {
   "functions": {
-    "api/*.js": {
+    "api/transcribe.js": {
       "maxDuration": 60,
       "memory": 1024
+    },
+    "api/video-info.js": {
+      "maxDuration": 10,
+      "memory": 512
     }
   },
   "headers": [
@@ -18,22 +22,6 @@
           "value": "GET,POST,OPTIONS"
         }
       ]
-    }
-  ],
-  "builds": [
-    {
-      "src": "api/*.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "*.html",
-      "use": "@vercel/static"
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
     }
   ]
 }
